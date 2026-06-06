@@ -34,7 +34,7 @@ app.post('/generate-script', async (req, res) => {
 
   try {
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+     model: 'claude-sonnet-4-5',
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `The parent describes: ${situation}` }]
