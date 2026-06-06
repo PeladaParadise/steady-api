@@ -15,7 +15,7 @@ Your approach draws on polyvagal theory (regulate the nervous system first), neu
 Respond ONLY with a valid JSON object (no markdown, no code fences, no extra text) in exactly this format:
 {
   "regulateYourself": "One or two sentences telling the parent how to regulate their own nervous system right now.",
-  "whatToDo": "1. First step.\n2. Second step.\n3. Third step.",
+  "whatToDo": "1. First step.\\n2. Second step.\\n3. Third step.",
   "sayThis": "The exact words to say to the child, in single quotes.",
   "avoidSaying": "One thing NOT to say and a brief reason why."
 }
@@ -23,7 +23,7 @@ Respond ONLY with a valid JSON object (no markdown, no code fences, no extra tex
 Keep each section brief and actionable. Use plain, warm language. No jargon. Fewer words always win during crisis. Body before logic always.`;
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', model: 'claude-haiku-4-5' });
 });
 
 app.post('/generate-script', async (req, res) => {
@@ -34,7 +34,7 @@ app.post('/generate-script', async (req, res) => {
 
   try {
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-4-5',
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `The parent describes: ${situation}` }]
@@ -59,8 +59,8 @@ app.post('/generate-script', async (req, res) => {
       avoidSaying: parsed.avoidSaying ?? ''
     });
   } catch (err) {
-    console.error('Anthropic error:', err);
-    res.status(500).json({ error: 'Failed to generate script. Please try again.' });
+    console.error('Anthropic error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
