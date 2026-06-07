@@ -47,7 +47,8 @@ app.post('/generate-script', async (req, res) => {
 
     let parsed;
     try {
-      parsed = JSON.parse(block.text);
+     const cleaned = block.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+parsed = JSON.parse(cleaned);
 } catch (parseError) {
   console.error('Parse error:', parseError.message, 'Raw text:', block.text);
       return res.status(500).json({ error: 'Failed to parse AI response' });
