@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
+import Stripe from 'stripe';
 
 const app = express();
 app.use(cors());
@@ -106,6 +107,29 @@ app.post('/generate-script', async (req, res) => {
     });
   } catch (err) {
     console.error('Anthropic error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// ── STRIPE CHECKOUT ──────────────────────────────────────────────────────────
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      line_items: [{
+        price: process.env.STRIPE_PRICE_ID,
+        quantity: 1
+      }],
+      success_url: 'https://peladaparadise.github.io/Steady/?success=true',
+      cancel_url: 'https://peladaparadise.github.io/Steady/',
+      currency: 'cad'
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
