@@ -161,16 +161,7 @@ app.post('/create-checkout-session-pod', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-      success_url: 'https://peladaparadise.github.io/Steady/?success=true',
-      cancel_url: 'https://peladaparadise.github.io/Steady/',
-      currency: 'cad'
-    });
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error('Stripe error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Steady API running on port ${PORT}`));
