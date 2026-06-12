@@ -123,6 +123,32 @@ app.post('/create-checkout-session', async (req, res) => {
         price: process.env.STRIPE_PRICE_ID,
         quantity: 1
       }],
+
+      // ── STRIPE CHECKOUT WITH STEADYPOD COUPON ────────────────
+app.post('/create-checkout-session-pod', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      line_items: [{
+        price: process.env.STRIPE_PRICE_ID,
+        quantity: 1
+      }],
+      discounts: [{
+        coupon: process.env.STRIPE_STEADYPOD_COUPON_ID
+      }],
+      success_url:
+        'https://peladaparadise.github.io/Steady/?success=true',
+      cancel_url:
+        'https://peladaparadise.github.io/Steady/',
+      currency: 'cad'
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe POD error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
       success_url: 'https://peladaparadise.github.io/Steady/?success=true',
       cancel_url: 'https://peladaparadise.github.io/Steady/',
       currency: 'cad'
