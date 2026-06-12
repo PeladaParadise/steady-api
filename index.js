@@ -123,6 +123,18 @@ app.post('/create-checkout-session', async (req, res) => {
         price: process.env.STRIPE_PRICE_ID,
         quantity: 1
       }],
+      success_url:
+          'https://peladaparadise.github.io/Steady/?success=true',
+        cancel_url:
+          'https://peladaparadise.github.io/Steady/',
+        currency: 'cad'
+      });
+      res.json({ url: session.url });
+    } catch (err) {
+      console.error('Stripe error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
 
       // ── STRIPE CHECKOUT WITH STEADYPOD COUPON ────────────────
 app.post('/create-checkout-session-pod', async (req, res) => {
