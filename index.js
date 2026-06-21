@@ -22,7 +22,31 @@ Respond ONLY with a valid JSON object (no markdown, no code fences, no extra tex
 }
 
 Keep each section brief and actionable. Use plain, warm language. No jargon. Fewer words always win during crisis. Body before logic always.`;
+const AGENCY_SYSTEM_PROMPT = `You are a professional de-escalation support tool for specialized caregivers working in Supportive Housing for complex and at-risk youth in British Columbia, Canada, operating within the MCFD Supportive Housing and Staffed Residential framework.
 
+Your guidance draws on CPI (Crisis Prevention Institute) nonviolent crisis intervention, MCFD trauma-informed practice, Collaborative Problem Solving (Ross Greene), the Neufeld developmental model, Gabor Mate's trauma-informed framework, and Emotion-Focused Family Therapy (EFFT, Dr. Adele Lafrance) which emphasizes emotion coaching, caregiver blocks, and connection before intervention.
+
+Tone and language rules:
+- Always professional. Never familial. You are addressing a trained caregiver, not a parent.
+- Refer to the young person as "the youth", "them", or "they". Never use familial language.
+- Be direct and actionable. Caregivers are in the moment. Every word must earn its place.
+- Never use em dashes.
+
+Critical rules:
+- Always flag when emergency services or on-call clinical support should be contacted.
+- Always flag when an incident report is required.
+- Never instruct physical intervention unless there is imminent risk of harm and agency threshold is met. Many programs are single staffed -- always flag when on-call support is needed.
+- No identifying information about youth should be entered into this tool.
+
+Respond ONLY with a valid JSON object (no markdown, no code fences, no extra text) in exactly this format:
+{
+  "regulateYourself": "One or two sentences on how the caregiver regulates their own nervous system first.",
+  "whatToDo": "1. First step.\\n2. Second step.\\n3. Third step.",
+  "sayThis": "Exact professional scripted language to use with the youth.",
+  "avoidSaying": "One specific phrase or approach to avoid and a brief reason why."
+}
+
+Keep each section brief and actionable. Professional tone throughout. Fewer words always win in crisis. Body before logic always.`;
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', model: 'claude-haiku-4-5-20251001' });
 });
@@ -162,6 +186,45 @@ app.post('/create-checkout-session-pod', async (req, res) => {
   }
 });
 
+// ── AGENCY AI SCRIPT GENERATION ──────────────────────────────────────────────
+app.post('/generate-script-agency', async (req, res) => {
+  const { situation } = req.body;
+  if (!situation || typeof situation !== 'string') {
+    return res.status(400).json({ error: 'situation is required' });
+  }
 
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1000,
+      system: AGENCY_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: `The caregiver describes: ${situation}` }]
+    });
+
+    const block = message.content[0];
+    if (block.type !== 'text') {
+      return res.status(500).json({ error: 'Unexpected response from AI' });
+    }
+
+    let parsed;
+    try {
+      const cleaned = block.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error('Agency parse error:', parseError.message, 'Raw text:', block.text);
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+
+    res.json({
+      regulateYourself: parsed.regulateYourself ?? '',
+      whatToDo: parsed.whatToDo ?? '',
+      sayThis: parsed.sayThis ?? '',
+      avoidSaying: parsed.avoidSaying ?? ''
+    });
+  } catch (err) {
+    console.error('Agency Anthropic error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Steady API running on port ${PORT}`));
